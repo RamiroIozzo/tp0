@@ -1,62 +1,78 @@
 #include "client.h"
+#include "../../server/compartidos.h"
 
 int main(void)
 {
 	/*---------------------------------------------------PARTE 2-------------------------------------------------------------*/
 
 	int conexion;
-	char* ip;
-	char* puerto;
-	char* valor;
 
-	t_log* logger;
-	t_config* config;
-
-	/* ---------------- LOGGING ---------------- */
-
-	logger = iniciar_logger();
-	
-	// Usando el logger creado previamente
-	// Escribi: "Hola! Soy un log"
-	log_info(logger, "Hola! Soy un tronco");
-	/* ---------------- ARCHIVOS DE CONFIGURACION ---------------- */
-
-	
-	config = iniciar_config();
-
-	// Usando el config creado previamente, leemos los valores del config y los 
-	// dejamos en las variables 'ip', 'puerto' y 'valor'
-	ip = config_get_string_value(config, "IP");
-	puerto = config_get_string_value(config, "PUERTO");
-	valor = config_get_string_value(config, "CLAVE");
-	// Loggeamos el valor de config
-	log_info(logger, valor);
-
-	/* ---------------- LEER DE CONSOLA ---------------- */
-
-	leer_consola(logger);
-
-	/*---------------------------------------------------PARTE 3-------------------------------------------------------------*/
-
-	// ADVERTENCIA: Antes de continuar, tenemos que asegurarnos que el servidor esté corriendo para poder conectarnos a él
-
-	// Creamos una conexión hacia el servidor
-	conexion = crear_conexion(ip, puerto);
+	conexion = crear_conexion("127.0.0.1", "4444");
 
 	// Enviamos al servidor el valor de CLAVE como mensaje
-	enviar_mensaje(valor, conexion);
+	enviar_mensaje("holaa", conexion);
+	
+	t_persona persona;
+	persona = crear_persona("Ramiro", 43988884, 10000, 23);
+
+	t_buffer2* buffer = malloc(sizeof(t_buffer2));
+	buffer->size = sizeof(uint32_t) * 3
+				 + sizeof(uint8_t)
+				 + persona.nombre_length;
+	buffer->offset = 0;
+	buffer->stream = malloc(buffer->size);
+
+	memcpy(buffer->stream + buffer->offset, &persona.dni, sizeof(uint32_t));
+	buffer->stream += sizeof(uint32_t);
+	memcpy(buffer->stream + buffer->offset, &persona.edad, sizeof(uint8_t));
+	buffer->stream += sizeof(uint8_t);
+	memcpy(buffer->stream + buffer->offset, &persona.pasaporte, sizeof(uint32_t));
+	buffer->stream += sizeof(uint32_t);
+
+	memcpy(buffer->stream + buffer->offset, &persona.nombre_length, sizeof(uint32_t));
+	buffer->offset += sizeof(uint32_t);
+	memcpy(buffer->stream + buffer->offset, &persona.nombre, persona.nombre_length);
+
+	//free(persona.nombre);
+
+	t_paquete2* paquete = malloc(sizeof(t_paquete2));
+
+	paquete->codigo_operacion = 100;
+	printf("codigo de operación 'enviado' %d\n", paquete->codigo_operacion);
+	paquete->buffer = buffer;
+
+	printf("paquete: ");
+	printf(paquete);
+	printf("\n");
+	void* a_enviar = malloc(buffer->size + sizeof(uint8_t) + sizeof(uint32_t));
+	int offset = 0;
+
+	memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(uint8_t));
+	
+	offset += sizeof(uint8_t);
+	memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(a_enviar + offset, &(paquete->buffer->stream), paquete->buffer->size);
+
+	printf("a ver...");
+	printf("Contenido de a_enviar: \n");
+	//imprimir_bytes(a_enviar, buffer->size + sizeof(uint8_t) + sizeof(uint32_t));
+	send(conexion, a_enviar, buffer->size + sizeof(uint8_t) + sizeof(uint32_t), 0);
+
+	
+	char* leido = malloc(1024);
+	while (strcmp(leido, "exit") != 0)
+	{
+		leido = readline("> ");
+		send(conexion, leido, sizeof(leido), 0);
+	}
+	
+	
+
+	close(conexion);
 	// Armamos y enviamos el paquete
-	paquete(conexion);
+	//paquete(conexion);
 
-	terminar_programa(conexion, logger, config);
-
-	/*---------------------------------------------------PARTE 5-------------------------------------------------------------*/
-	// Proximamente
-	//aprovecho pa barrer
-	//suban los pies
-	log_destroy(logger);
-	config_destroy(config);
-	//pueden bajarlos
 }
 
 t_log* iniciar_logger(void)
@@ -119,10 +135,4 @@ void paquete(int conexion)
 	// ¡No te olvides de liberar las líneas y el paquete antes de regresar!
 	free(leido);
 	free(paquete);
-}
-
-void terminar_programa(int conexion, t_log* logger, t_config* config)
-{
-	/* Y por ultimo, hay que liberar lo que utilizamos (conexion, log y config) 
-	  con las funciones de las commons y del TP mencionadas en el enunciado */
 }
