@@ -1,0 +1,67 @@
+{
+  // See https://go.microsoft.com/fwlink/?linkid=830387
+  // for the documentation about the launch.json format
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "run",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/${workspaceFolderBasename}",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "linux": {
+        "MIMode": "gdb"
+      },
+      "osx": {
+        "MIMode": "lldb"
+      },
+      "setupCommands": [
+        {
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "build"
+    },
+    {
+      "name": "Debug Cliente",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/../client/bin/client",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/../client",
+      "environment": [],
+      "externalConsole": false,
+      "linux": {
+        "MIMode": "gdb"
+      },
+      "preLaunchTask": "build-client"
+    },
+    {
+      "name": "Debug Servidor",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/../server/bin/server",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/../server",
+      "environment": [],
+      "externalConsole": false,
+      "linux": {
+        "MIMode": "gdb"
+      },
+      "preLaunchTask": "build-server"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "run c&s",
+      "configurations": ["Debug Cliente", "Debug Servidor"]
+    }
+  ]
+}

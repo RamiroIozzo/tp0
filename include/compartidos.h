@@ -6,4 +6,6 @@ typedef struct{
     int edad;
 } Persona;
 
+
+
 #endif

@@ -61,8 +61,10 @@ void imprimir_bytes(void* ptr, size_t size){
 }
 
 typedef struct{
-    int datoint;
-}estructura;
+	uint8_t codop;
+	uint8_t size;
+	char* data;
+} polla;
 
 
 #endif
